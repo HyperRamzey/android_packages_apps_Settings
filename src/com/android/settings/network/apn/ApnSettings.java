@@ -32,6 +32,7 @@ import android.os.UserManager;
 import android.provider.Telephony;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.telephony.data.ApnSetting;
 import android.util.Log;
 import android.view.Menu;
@@ -217,20 +218,62 @@ public class ApnSettings extends RestrictedDashboardFragment
         return args.getInt(SUB_ID, SubscriptionManager.INVALID_SUBSCRIPTION_ID);
     }
 
+
+    /**
+     * Returns the 5 or 6 digit MCC+MNC of the given subscription, digits only, or null if it
+     * cannot be determined. Sanitised because the value ends up in a SQL selection.
+     */
+    @Nullable
+    private String getSimOperatorForSubscription() {
+        final String operator;
+        try {
+            operator = TelephonyManager.from(requireContext())
+                    .createForSubscriptionId(mSubId)
+                    .getSimOperator();
+        } catch (SecurityException e) {
+            Log.w(TAG, "Cannot read the SIM operator", e);
+            return null;
+        }
+        if (operator == null) {
+            return null;
+        }
+        final StringBuilder digits = new StringBuilder(operator.length());
+        for (int i = 0; i < operator.length(); i++) {
+            final char c = operator.charAt(i);
+            if (Character.isDigit(c)) {
+                digits.append(c);
+            }
+        }
+        if (digits.length() < 5 || digits.length() > 6) {
+            return null;
+        }
+        return digits.toString();
+    }
+
     private void fillList() {
-        final Uri simApnUri = Uri.withAppendedPath(Telephony.Carriers.SIM_APN_URI,
-                String.valueOf(mSubId));
+        // The per-subscription carriers URI (content://telephony/carriers/sim/<subId>) is not
+        // implemented by the platform TelephonyProvider: it falls through to the default branch
+        // and returns an empty cursor, so the APN list came up empty for every SIM. Query the
+        // carriers table directly and filter on the subscription's own MCC/MNC.
+        final String simOperator = getSimOperatorForSubscription();
         final StringBuilder where =
                 new StringBuilder("NOT (type='ia' AND (apn=\"\" OR apn IS NULL)) AND "
                 + "user_visible!=0");
         // Remove Emergency type, users should not mess with that
         where.append(" AND NOT (type='emergency')");
 
+        if (simOperator != null) {
+            where.append(" AND ").append(Telephony.Carriers.MCC).append(" = ")
+                    .append(simOperator.substring(0, 3))
+                    .append(" AND ").append(Telephony.Carriers.MNC).append(" = ")
+                    .append(simOperator.substring(3));
+        }
+
         if (mHideImsApn) {
             where.append(" AND NOT (type='ims')");
         }
 
-        final Cursor cursor = getContentResolver().query(simApnUri,
+        final Cursor cursor = getContentResolver().query(Telephony.Carriers.CONTENT_URI,
                 CARRIERS_PROJECTION, where.toString(), null,
                 Telephony.Carriers.DEFAULT_SORT_ORDER);
 
