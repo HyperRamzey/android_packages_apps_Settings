@@ -177,7 +177,14 @@ public class UdfpsEnrollView extends FrameLayout implements UdfpsEnrollHelper.Li
             final int parentRight = parentLeft + parentView.getWidth();
             params.gravity = Gravity.RIGHT | Gravity.TOP;
             final int rightMargin = parentRight - rotatedBounds.right - getPaddingX();
-            final int topMargin = rotatedBounds.top - parentTop - getPaddingY();
+            // A30s: shift the enrollment ring DOWN by udfps_vertical_offset. The
+            // view is centred on the sensor rect and that rect is what the HAL is
+            // told and what the hit-test uses, so the nudge is applied as a margin
+            // here instead of by moving mSensorRect. 0px on every other device.
+            final int topMargin =
+                    rotatedBounds.top - parentTop - getPaddingY()
+                            + getResources()
+                                    .getDimensionPixelSize(R.dimen.udfps_vertical_offset);
             if (marginLayoutParams.rightMargin == rightMargin
                     && marginLayoutParams.topMargin == topMargin) {
                 return;

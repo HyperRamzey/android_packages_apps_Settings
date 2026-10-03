@@ -562,4 +562,9 @@
     <dimen name="bluetooth_battery_indicator_battery_meter_height">16dp</dimen>
     <dimen name="bluetooth_battery_indicator_charging_icon_width">12dp</dimen>
     <dimen name="bluetooth_battery_indicator_charging_icon_height">16dp</dimen>
+
+    <!-- UDFPS enrollment ring vertical nudge, in raw pixels. 0 = centred on the
+         sensor rect (stock). See the matching SystemUI dimen of the same name and
+         device/samsung/a30s/udfps_settings_overlay for the A30s value. -->
+    <dimen name="udfps_vertical_offset">0px</dimen>
 </resources>
