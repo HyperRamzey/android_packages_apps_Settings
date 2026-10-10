@@ -52,6 +52,12 @@ public class UdfpsEnrollDrawable extends Drawable {
     private static final float SCALE_MAX = 0.25f;
     private static final float DEFAULT_STROKE_WIDTH = 3f;
 
+    /**
+     * A30s: per-side inset (fraction of the rect) applied to the enrollment bg oval in
+     * {@link #onSensorRectUpdated(RectF)}. Halves the button without touching the progress ring.
+     */
+    static final float BG_OVAL_INSET_FRACTION = 0.25f;
+
     @NonNull
     private final Drawable mMovingTargetFpIcon;
     @NonNull
@@ -131,11 +137,18 @@ public class UdfpsEnrollDrawable extends Drawable {
 
     /** The [sensorRect] coordinates for the sensor area. */
     void onSensorRectUpdated(@NonNull RectF sensorRect) {
-        int margin = ((int) sensorRect.height()) / 8;
-        Rect bounds = new Rect((int) (sensorRect.left) + margin, (int) (sensorRect.top) + margin,
-                (int) (sensorRect.right) - margin, (int) (sensorRect.bottom) - margin);
+        // A30s: halve the bg oval (the button). A copy is used so the caller's rect is never
+        // mutated. The progress ring is sized separately from overlayParams.sensorBounds by
+        // UdfpsEnrollProgressBarDrawable and is intentionally left untouched.
+        final RectF buttonRect = new RectF(sensorRect);
+        buttonRect.inset(buttonRect.width() * BG_OVAL_INSET_FRACTION,
+                buttonRect.height() * BG_OVAL_INSET_FRACTION);
+
+        int margin = ((int) buttonRect.height()) / 8;
+        Rect bounds = new Rect((int) (buttonRect.left) + margin, (int) (buttonRect.top) + margin,
+                (int) (buttonRect.right) - margin, (int) (buttonRect.bottom) - margin);
         updateFingerprintIconBounds(bounds);
-        mSensorRect = sensorRect;
+        mSensorRect = buttonRect;
     }
 
     void setEnrollHelper(@NonNull UdfpsEnrollHelper helper) {

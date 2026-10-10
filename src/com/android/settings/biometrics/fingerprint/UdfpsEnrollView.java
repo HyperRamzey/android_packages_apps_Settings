@@ -53,6 +53,12 @@ public class UdfpsEnrollView extends FrameLayout implements UdfpsEnrollHelper.Li
 
     private int mProgressBarRadius;
 
+    /**
+     * A30s: px added to the ring's stroke centreline so the ring sits just outside the button
+     * instead of collapsing onto it.
+     */
+    private static final float RING_EXTRA_DIAMETER_PX = 5f;
+
     // sensorRect may be bigger than the sensor. True sensor dimensions are defined in
     // overlayParams.sensorBounds
     private Rect mSensorRect;
@@ -150,6 +156,13 @@ public class UdfpsEnrollView extends FrameLayout implements UdfpsEnrollHelper.Li
                 (mOverlayParams.getSensorBounds().width() + getPaddingX()),
                 (mOverlayParams.getSensorBounds().height() + getPaddingY()));
         mFingerprintDrawable.onSensorRectUpdated(new RectF(mSensorRect));
+
+        // A30s: stroke the progress ring on the button's edge (visible outer edge = button
+        // diameter + half the stroke) instead of across the whole sensor-sized padded view.
+        final float bgOvalDiameter = mOverlayParams.getSensorBounds().width()
+                * (1f - 2f * UdfpsEnrollDrawable.BG_OVAL_INSET_FRACTION);
+        mFingerprintProgressDrawable.setRingCenterlineDiameter(
+                bgOvalDiameter + RING_EXTRA_DIAMETER_PX);
     }
 
     private void updateDimensions() {

@@ -160,6 +160,10 @@ class UdfpsEnrollIconV2 internal constructor(context: Context, attrs: AttributeS
     fingerprintDrawable.setAlpha(alpha)
     sensorOutlinePaint.setAlpha(alpha)
     val currLocation = getCurrLocation()
+    // A30s: halve the bg oval (the button). The progress ring is sized separately from
+    // overlayParams.sensorBounds and is intentionally left untouched.
+    val inset = sensorRectBounds.width() * BG_OVAL_INSET_FRACTION
+    currLocation.inset(inset, inset)
     canvas.scale(currentScale, currentScale, currLocation.centerX(), currLocation.centerY())
 
     canvas.drawOval(currLocation, sensorOutlinePaint)
@@ -232,6 +236,12 @@ class UdfpsEnrollIconV2 internal constructor(context: Context, attrs: AttributeS
     private const val DEFAULT_STROKE_WIDTH = 3f
     private const val TARGET_ANIM_DURATION_LONG = 800L
     private const val SCALE_MAX = 0.25f
+
+    /**
+     * A30s: per-side inset applied to the bg oval (button) in [draw]. Shrinks the button to
+     * half the sensor size without touching the separately-drawn progress ring.
+     */
+    private const val BG_OVAL_INSET_FRACTION = 0.25f
 
     private fun createUdfpsIcon(context: Context): ShapeDrawable {
       val fpPath = context.resources.getString(R.string.config_udfpsIcon)
