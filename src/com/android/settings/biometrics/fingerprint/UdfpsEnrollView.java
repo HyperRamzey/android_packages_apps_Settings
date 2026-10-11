@@ -55,9 +55,10 @@ public class UdfpsEnrollView extends FrameLayout implements UdfpsEnrollHelper.Li
 
     /**
      * A30s: px added to the ring's stroke centreline so the ring sits just outside the button
-     * instead of collapsing onto it.
+     * instead of collapsing onto it. Raised from 5px to 15px: the centreline
+     * moves 10px further out, so the ring is 10px wider across.
      */
-    private static final float RING_EXTRA_DIAMETER_PX = 5f;
+    private static final float RING_EXTRA_DIAMETER_PX = 15f;
 
     // sensorRect may be bigger than the sensor. True sensor dimensions are defined in
     // overlayParams.sensorBounds
