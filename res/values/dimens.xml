@@ -141,6 +141,12 @@
     <dimen name="sfps_enroll_finish_icon_margin_top">-24dp</dimen>
     <dimen name="udfps_lottie_translate_y">0dp</dimen>
     <dimen name="udfps_lottie_padding_top">20dp</dimen>
+    <!-- a30s (ET715): vertical nudge (px) of the whole enrollment view (button and
+         progress ring) in UdfpsEnrollView.updateDimensions(). mSensorRect is left
+         alone, so the HAL/hit-test rect stays truthful. 0 on every other device; the
+         a30s udfps_settings_overlay sets 25px. Must be declared HERE for the overlay
+         to override it - an overlay for an undeclared resource is ignored. -->
+    <dimen name="udfps_vertical_offset">0px</dimen>
     <dimen name="biometrics_glif_header_height">274dp</dimen>
     <item name="biometrics_glif_header_height_ratio" format="float" type="dimen">0.27</item>
     <!-- For showing when Display / Font size set to largest -->

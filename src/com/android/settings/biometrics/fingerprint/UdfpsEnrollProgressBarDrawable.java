@@ -122,6 +122,14 @@ public class UdfpsEnrollProgressBarDrawable extends Drawable {
     private int mEnrollProgressHelp;
     private int mEnrollProgressHelpWithTalkback;
 
+    /**
+     * a30s (ET715): diameter (px) of the circle the progress ring is stroked along,
+     * centred in the view. -1 (the default) keeps the stock full-bounds behaviour.
+     * Set by {@code UdfpsEnrollView.onSensorRectUpdated()} to the enrollment
+     * button's diameter so the ring hugs the button instead of the view.
+     */
+    private int mRingCenterlineDiameter = -1;
+
     public UdfpsEnrollProgressBarDrawable(@NonNull Context context, @Nullable AttributeSet attrs) {
         mContext = context;
 
@@ -349,6 +357,18 @@ public class UdfpsEnrollProgressBarDrawable extends Drawable {
         ta.recycle();
     }
 
+    /**
+     * a30s (ET715): stroke the progress ring along a circle of this diameter centred
+     * in the view. Pass -1 to restore the stock full-bounds ring.
+     */
+    void setRingCenterlineDiameter(int diameterPx) {
+        if (mRingCenterlineDiameter == diameterPx) {
+            return;
+        }
+        mRingCenterlineDiameter = diameterPx;
+        invalidateSelf();
+    }
+
     @Override
     public void draw(@NonNull Canvas canvas) {
         canvas.save();
@@ -358,13 +378,31 @@ public class UdfpsEnrollProgressBarDrawable extends Drawable {
 
         final float halfPaddingPx = mStrokeWidthPx / 2f;
 
+        // a30s (ET715): when a centreline diameter has been published by
+        // UdfpsEnrollView, stroke a circle of exactly that diameter about the view's
+        // centre instead of following the (much larger) view bounds. -1 keeps the
+        // legacy full-bounds behaviour for every other device.
+        float arcLeft = halfPaddingPx;
+        float arcTop = halfPaddingPx;
+        float arcRight = getBounds().right - halfPaddingPx;
+        float arcBottom = getBounds().bottom - halfPaddingPx;
+        if (mRingCenterlineDiameter > 0) {
+            final float cx = getBounds().centerX();
+            final float cy = getBounds().centerY();
+            final float r = mRingCenterlineDiameter / 2f;
+            arcLeft = cx - r;
+            arcTop = cy - r;
+            arcRight = cx + r;
+            arcBottom = cy + r;
+        }
+
         if (mProgress < 1f) {
             // Draw the background color of the progress circle.
             canvas.drawArc(
-                    halfPaddingPx,
-                    halfPaddingPx,
-                    getBounds().right - halfPaddingPx,
-                    getBounds().bottom - halfPaddingPx,
+                    arcLeft,
+                    arcTop,
+                    arcRight,
+                    arcBottom,
                     0f /* startAngle */,
                     360f /* sweepAngle */,
                     false /* useCenter */,
@@ -374,10 +412,10 @@ public class UdfpsEnrollProgressBarDrawable extends Drawable {
         if (mProgress > 0f) {
             // Draw the filled portion of the progress circle.
             canvas.drawArc(
-                    halfPaddingPx,
-                    halfPaddingPx,
-                    getBounds().right - halfPaddingPx,
-                    getBounds().bottom - halfPaddingPx,
+                    arcLeft,
+                    arcTop,
+                    arcRight,
+                    arcBottom,
                     0f /* startAngle */,
                     360f * mProgress /* sweepAngle */,
                     false /* useCenter */,

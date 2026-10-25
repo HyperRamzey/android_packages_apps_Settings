@@ -52,6 +52,17 @@ public class UdfpsEnrollDrawable extends Drawable {
     private static final float SCALE_MAX = 0.25f;
     private static final float DEFAULT_STROKE_WIDTH = 3f;
 
+    /**
+     * a30s (ET715): fraction of the sensor inset from EACH side to size the visible
+     * enrollment button (the bg oval). The caller hands over the true sensor rect
+     * (238 px here), and drawing the oval at that size made the button look twice
+     * as big as the sensor. 0.25 per side halves it.
+     *
+     * <p>Package-private on purpose: {@link UdfpsEnrollView} derives the progress
+     * ring diameter from this same value, so button and ring cannot drift apart.
+     */
+    static final float BG_OVAL_INSET_FRACTION = 0.25f;
+
     @NonNull
     private final Drawable mMovingTargetFpIcon;
     @NonNull
@@ -131,11 +142,20 @@ public class UdfpsEnrollDrawable extends Drawable {
 
     /** The [sensorRect] coordinates for the sensor area. */
     void onSensorRectUpdated(@NonNull RectF sensorRect) {
-        int margin = ((int) sensorRect.height()) / 8;
-        Rect bounds = new Rect((int) (sensorRect.left) + margin, (int) (sensorRect.top) + margin,
-                (int) (sensorRect.right) - margin, (int) (sensorRect.bottom) - margin);
+        // a30s: shrink the drawn oval to the button size and derive the glyph from
+        // the same rect, so the two keep their stock 3/4 ratio.
+        // The incoming rect is the real sensor bounds and is also the HAL/hit-test
+        // rect, so it is copied, never mutated.
+        final float insetX = sensorRect.width() * BG_OVAL_INSET_FRACTION;
+        final float insetY = sensorRect.height() * BG_OVAL_INSET_FRACTION;
+        final RectF buttonRect = new RectF(
+                sensorRect.left + insetX, sensorRect.top + insetY,
+                sensorRect.right - insetX, sensorRect.bottom - insetY);
+        int margin = ((int) buttonRect.height()) / 8;
+        Rect bounds = new Rect((int) (buttonRect.left) + margin, (int) (buttonRect.top) + margin,
+                (int) (buttonRect.right) - margin, (int) (buttonRect.bottom) - margin);
         updateFingerprintIconBounds(bounds);
-        mSensorRect = sensorRect;
+        mSensorRect = buttonRect;
     }
 
     void setEnrollHelper(@NonNull UdfpsEnrollHelper helper) {

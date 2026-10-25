@@ -53,6 +53,13 @@ public class UdfpsEnrollView extends FrameLayout implements UdfpsEnrollHelper.Li
 
     private int mProgressBarRadius;
 
+    /**
+     * a30s (ET715): extra px added to the enrollment button's diameter when sizing
+     * the progress ring's centreline, so the ring sits just outside the button
+     * instead of on top of it (0 would put the centreline exactly on the edge).
+     */
+    private static final int RING_EXTRA_DIAMETER_PX = 15;
+
     // sensorRect may be bigger than the sensor. True sensor dimensions are defined in
     // overlayParams.sensorBounds
     private Rect mSensorRect;
@@ -150,6 +157,14 @@ public class UdfpsEnrollView extends FrameLayout implements UdfpsEnrollHelper.Li
                 (mOverlayParams.getSensorBounds().width() + getPaddingX()),
                 (mOverlayParams.getSensorBounds().height() + getPaddingY()));
         mFingerprintDrawable.onSensorRectUpdated(new RectF(mSensorRect));
+
+        // a30s (ET715): wrap the progress ring onto the enrollment button. The
+        // drawable shrinks the oval by BG_OVAL_INSET_FRACTION per side, so the
+        // button's diameter is width * (1 - 2 * fraction); RING_EXTRA_DIAMETER_PX
+        // then puts the ring's centreline just outside the button's edge.
+        mFingerprintProgressDrawable.setRingCenterlineDiameter(
+                (int) (mSensorRect.width() * (1f - 2f * UdfpsEnrollDrawable.BG_OVAL_INSET_FRACTION))
+                        + RING_EXTRA_DIAMETER_PX);
     }
 
     private void updateDimensions() {
@@ -177,7 +192,11 @@ public class UdfpsEnrollView extends FrameLayout implements UdfpsEnrollHelper.Li
             final int parentRight = parentLeft + parentView.getWidth();
             params.gravity = Gravity.RIGHT | Gravity.TOP;
             final int rightMargin = parentRight - rotatedBounds.right - getPaddingX();
-            final int topMargin = rotatedBounds.top - parentTop - getPaddingY();
+            // a30s (ET715): nudge the whole UdfpsEnrollView (button AND ring) down by
+            // udfps_vertical_offset. It moves the view, not mSensorRect, so the
+            // overlay's hit-test stays sensor-true. 0px on every other device.
+            final int topMargin = rotatedBounds.top - parentTop - getPaddingY()
+                    + getResources().getDimensionPixelSize(R.dimen.udfps_vertical_offset);
             if (marginLayoutParams.rightMargin == rightMargin
                     && marginLayoutParams.topMargin == topMargin) {
                 return;
